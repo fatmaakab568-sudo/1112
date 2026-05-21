@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام إدارة المخازن والنقل</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="glass-panel">
+        <h1>إدارة المخازن والحسابات</h1>
+    </header>
+
+    <main id="main-content">
+        
+        <section id="tab-add" class="tab-content active">
+            <div class="glass-card">
+                <h2>بيانات الحركة</h2>
+                <form id="record-form">
+                    <input type="hidden" id="record-id" value="">
+                    
+                    <div class="form-group">
+                        <label>التاريخ</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>اسم السائق</label>
+                        <input type="text" id="driver-name" placeholder="أدخل اسم السائق" required>
+                    </div>
+                    <div class="form-group">
+                        <label>اسم الشركة (للفلترة والكشف)</label>
+                        <input type="text" id="company-name" placeholder="مثل: جود العراق" required>
+                    </div>
+                    <div class="form-group">
+                        <label>رقم السيارة والمحافظة</label>
+                        <input type="text" id="car-info" placeholder="رقم السيارة - المحافظة" required>
+                    </div>
+                    <div class="form-group">
+                        <label>نوع المادة</label>
+                        <input type="text" id="material-type" placeholder="مثل: حصو" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>الوحدة</label>
+                            <select id="unit-type">
+                                <option value="طن">طن</option>
+                                <option value="متر">متر</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label>الكمية</label>
+                            <input type="text" inputmode="numeric" id="quantity" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>سعر الشراء (للوحدة)</label>
+                            <input type="text" inputmode="numeric" id="purchase-price" placeholder="0" required>
+                        </div>
+                        <div class="form-group half">
+                            <label>سعر البيع (للوحدة)</label>
+                            <input type="text" inputmode="numeric" id="selling-price" placeholder="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="calc-box glass-panel-inner">
+                        <p>إجمالي البيع: <span id="total-sale-display">0</span></p>
+                        <p>صافي الربح المتوقع: <span id="net-profit-display" class="profit-text">0</span></p>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px;">
+                        <label>اسم الصندوق / الفورمن (الذي دفع من عهدته للسائق)</label>
+                        <input type="text" id="cashier-name" placeholder="مثال: أبو رقية" required>
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ الواصل (نقد يُسحب من صندوق الفورمن)</label>
+                        <input type="text" inputmode="numeric" id="amount-received" placeholder="0" required>
+                    </div>
+                    
+                    <div class="calc-box glass-panel-inner warning">
+                        <p>المتبقي ديون للشركة (حسب الشراء): <span id="remaining-debt-display">0</span></p>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="btn-primary">حفظ البيانات</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="tab-transactions" class="tab-content">
+            <div class="glass-card">
+                <h2>الحركات اليومية</h2>
+                <div class="search-box">
+                    <input type="text" id="search-driver" placeholder="🔍 بحث باسم السائق...">
+                    <input type="text" id="search-company" placeholder="🔍 بحث باسم الشركة...">
+                    <input type="date" id="search-date">
+                </div>
+                <div class="table-responsive">
+                    <table id="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>السائق</th>
+                                <th>السيارة</th>
+                                <th>الشركة</th>
+                                <th>المادة</th>
+                                <th>الكمية</th>
+                                <th>سعر الشراء</th>
+                                <th>سعر البيع</th>
+                                <th>الصندوق/الفورمن</th>
+                                <th>المدفوع</th>
+                                <th>الديون</th>
+                                <th>الربح</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-financial" class="tab-content">
+            <div class="glass-card">
+                <h2>حركات الصندوق (قبض وصرف)</h2>
+                <form id="financial-form">
+                    <input type="hidden" id="financial-id">
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>التاريخ</label>
+                            <input type="date" id="fin-date" required>
+                        </div>
+                        <div class="form-group half">
+                            <label>نوع الحركة</label>
+                            <select id="fin-type">
+                                <option value="receipt">✅ سند قبض (استلام نقد وتنزيل مخزن)</option>
+                                <option value="deposit">📥 إيداع عهدة (تمويل صندوق فورمن)</option>
+                                <option value="withdraw">📤 سحب مصروف (من صندوق فورمن)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="receipt-fields">
+                        <div class="form-group">
+                            <label>الجهة (اسم الشركة أو السائق)</label>
+                            <input type="text" id="fin-entity" placeholder="الجهة المرتبطة بالحركة">
+                        </div>
+                        <div class="form-group">
+                            <label>المادة</label>
+                            <select id="fin-material">
+                                <option value="">كل المواد</option>
+                            </select>
+                        </div>
+                        <div id="debt-hint" class="debt-hint-box" style="display:none;"></div>
+                        <div class="form-group">
+                            <label>الكمية (طنية)</label>
+                            <input type="text" inputmode="numeric" id="fin-tonnage" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div id="fund-fields" style="display:none; background: rgba(0,210,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(0,210,255,0.3); margin-bottom: 15px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="color: var(--accent-color); font-weight: bold;"><i class="fas fa-wallet"></i> اسم الصندوق / الفورمن (مثل: أبو رقية)</label>
+                            <input type="text" id="fin-cashier" placeholder="اسم الشخص صاحب العهدة">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>المبلغ</label>
+                        <input type="text" inputmode="numeric" id="fin-amount" placeholder="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ملاحظات</label>
+                        <input type="text" id="fin-notes" placeholder="تفاصيل إضافية...">
+                    </div>
+                    <button type="submit" id="fin-submit-btn" class="btn-primary">حفظ السند</button>
+                </form>
+
+                <h3 style="margin-top:25px; color:var(--accent-color); border-bottom:1px solid var(--glass-border); padding-bottom:10px;">سجل الصندوق</h3>
+                <div class="table-responsive" style="margin-top:15px;">
+                    <table id="financial-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>النوع</th>
+                                <th>الجهة / الصندوق</th>
+                                <th>المادة</th>
+                                <th>الكمية (طنية)</th>
+                                <th>المبلغ</th>
+                                <th>ملاحظات</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financial-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-statement" class="tab-content">
+            <div class="glass-card">
+                <h2>كشف حساب تفصيلي (ديون الشركات)</h2>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>من تاريخ</label>
+                        <input type="date" id="stmt-from">
+                    </div>
+                    <div class="form-group half">
+                        <label>إلى تاريخ</label>
+                        <input type="date" id="stmt-to">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>اسم الجهة (شركة أو سائق)</label>
+                    <input type="text" id="stmt-entity" placeholder="اكتب اسم الجهة للبحث الدقيق...">
+                </div>
+                <div class="form-group">
+                    <label>المادة (اختياري)</label>
+                    <select id="stmt-material">
+                        <option value="all">كل المواد</option>
+                    </select>
+                </div>
+                <button id="btn-generate-stmt" class="btn-primary" style="display:none;">توليد الكشف</button>
+                
+                <div id="stmt-result" style="display:none; margin-top:25px;">
+                    <h3 style="color:var(--accent-color); margin-bottom:15px;">خلاصة الكشف</h3>
+                    <div class="stats-grid" style="margin-bottom:20px; grid-template-columns: 1fr 1fr;">
+                        <div class="stat-box glass-panel-inner warning">
+                            <h3>رصيد الديون المتبقية</h3>
+                            <p id="stmt-final-balance" dir="ltr">0</p>
+                        </div>
+                        <div class="stat-box glass-panel-inner" style="border-color: var(--profit-color);">
+                            <h3>إجمالي المسدد (له)</h3>
+                            <p id="stmt-total-paid" class="profit-text" dir="ltr">0</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="stmt-table">
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>نوع البيان</th>
+                                    <th>الجهة / السائق</th>
+                                    <th>السيارة</th>
+                                    <th>المادة</th>
+                                    <th>الكمية</th>
+                                    <th>سعر البيع</th>
+                                    <th>المبلغ الكلي (عليه)</th>
+                                    <th>الواصل (المدفوع)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stmt-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-dashboard" class="tab-content">
+            
+            <div class="glass-card" style="border-color: var(--accent-color); margin-bottom: 25px;">
+                <h2 style="color: var(--accent-color);">أرصدة الصناديق (العُهد النقدية)</h2>
+                <div id="fund-balances-grid" class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h2>إحصائيات العمل والأرباح</h2>
+                <div class="filter-row" style="display: none;">
+                    <div class="filter-box">
+                        <label>تصفية حسب الشركة:</label>
+                        <select id="filter-company">
+                            <option value="all">الكل</option>
+                        </select>
+                    </div>
+                    <div class="filter-box">
+                        <label>بحث باسم السائق:</label>
+                        <input type="text" id="filter-driver" placeholder="اسم السائق...">
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box glass-panel-inner" style="border-color: #ffffff;">
+                        <h3 style="color: #ffffff;">إجمالي قيمة المبيعات</h3>
+                        <p id="stat-total-sales" style="color: #ffffff; font-weight: bold; font-size: 1.4rem;">0</p>
+                    </div>
+                    <div class="stat-box glass-panel-inner warning" style="border-color: var(--danger-color);">
+                        <h3 style="color: var(--danger-color);">إجمالي تكلفة المشتريات</h3>
+                        <p id="stat-total-purchases" style="color: var(--danger-color); font-weight: bold; font-size: 1.4rem;">0</p>
+                    </div>
+                    <div class="stat-box glass-panel-inner">
+                        <h3>إجمالي الكميات المسجلة</h3>
+                        <p id="stat-total-qty">0</p>
+                    </div>
+                    <div class="stat-box glass-panel-inner" style="border-color: var(--profit-color);">
+                        <h3>إجمالي الأرباح الصافية</h3>
+                        <p id="stat-total-profit" class="profit-text">0</p>
+                    </div>
+                    <div class="stat-box glass-panel-inner warning">
+                        <h3>إجمالي ديون الشركات</h3>
+                        <p id="stat-total-debt">0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-warehouse" class="tab-content">
+            <div class="glass-card">
+                <h2>المخزن (الكميات الموردة)</h2>
+                <div class="filter-row">
+                    <div class="filter-box">
+                        <label>تصفية حسب الشركة:</label>
+                        <select id="wh-filter-company">
+                            <option value="all">الكل</option>
+                        </select>
+                    </div>
+                    <div class="filter-box">
+                        <label>تصفية حسب المادة:</label>
+                        <select id="wh-filter-mat-view">
+                            <option value="all">كل المواد</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="wh-balance-grid" style="display:grid; gap:12px; margin-bottom:25px;"></div>
+            </div>
+        </section>
+
+        <div id="pwa-modal" class="glass-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:10000; text-align:center; min-width: 300px;">
+            <img src="./icon-192x192.png" alt="App Icon" style="width:80px; height:80px; margin-bottom:15px; border-radius:15px;">
+            <h3 style="color:var(--accent-color); margin-bottom:10px;">تثبيت التطبيق</h3>
+            <p style="color:#fff; margin-bottom:20px; font-size: 0.9rem;">قم بتثبيت التطبيق على جهازك للوصول السريع والعمل دون اتصال.</p>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button id="pwa-install-btn" class="btn-primary" style="flex:1;">تثبيت</button>
+                <button id="pwa-close-btn" class="btn-primary" style="flex:1; background:var(--danger-color);">إلغاء</button>
+            </div>
+        </div>
+
+    </main>
+
+    <nav class="bottom-nav glass-panel">
+        <div class="nav-item active" data-target="tab-add">
+            <i class="fas fa-plus-circle"></i>
+            <span>البيانات</span>
+        </div>
+        <div class="nav-item" data-target="tab-transactions">
+            <i class="fas fa-list-alt"></i>
+            <span>الحركات</span>
+        </div>
+        <div class="nav-item" data-target="tab-financial">
+            <i class="fas fa-wallet"></i>
+            <span>الصندوق</span>
+        </div>
+        <div class="nav-item" data-target="tab-warehouse">
+            <i class="fas fa-boxes"></i>
+            <span>المخزن</span>
+        </div>
+        <div class="nav-item" data-target="tab-statement">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>كشف</span>
+        </div>
+        <div class="nav-item" data-target="tab-dashboard">
+            <i class="fas fa-chart-pie"></i>
+            <span>إحصاء</span>
+        </div>
+    </nav>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
